@@ -1,16 +1,19 @@
 import React from "react";
 import ProductRow from "./ProductRow";
-
-const ProductGroup = ({product}) => {
+import { motion } from "framer-motion";
+import { categories } from "../App";
+const ProductGroup = ({ product, isAdmin }) => {
+  const currentCategroy = categories.find(
+    (category) => category.id === product.category
+  );
   return (
-    <div className="mt-4">
+    <motion.div whileHover={{scale:1.05}} className="mt-4">
       <div className="flex justify-between  text-2xl text-bold  text-slate-800">
-        <h2>{product.name}</h2>
-        <h2>{product.price}</h2>
+        <h2>{currentCategroy?.name}</h2>
+        <h2>Price</h2>
       </div>
-      <ProductRow name="latte" price="4000" />
-      <ProductRow name="mocha" price="5000" />
-    </div>
+      <ProductRow product={product} isAdmin={isAdmin} />
+    </motion.div>
   );
 };
 

@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import logo from "../images/brand-logo.png";
-
+import { Routes, Route, Link } from "react-router-dom";
 import "./App.css";
-import AddForm from "./component/AddForm";
-import ProductGroup from "./component/ProductGroup";
-import ProductRow from "./component/ProductRow";
+
+import User from "../pages/User";
+import Admin from "../pages/Admin";
+
 const sampleProducts = [
   {
     id: 1,
@@ -26,60 +26,110 @@ const sampleProducts = [
     category: 2,
   },
 ];
-const categories = [
+export const categories = [
   {
     id: 1,
-    name: "Drinks",
+    name: "Drinks🍹",
   },
   {
     id: 2,
-    name: "Cake",
+    name: "Cake 🧁",
   },
   {
     id: 3,
-    name: "Pizza",
+    name: "Pizza 🍕",
   },
 ];
+export const MenuContext = createContext();
+const STORAGE_KEY = "menuapp.products";
 function App() {
   const [products, setProducts] = useState(sampleProducts);
-  const [newProduct, setNewProduct] = useState({
-    id: uuidv4(),
-    name: "",
-    price: "",
-    category: "",
-  });
+  // const [newProduct, setNewProduct] = useState({
+  //   id: uuidv4(),
+  //   name: "",
+  //   price: "",
+  //   category: "",
+  // });
+  const [selectedProductId, setSelectedProductId] = useState();
+  const selectedProduct = products.find(
+    (product) => product.id === selectedProductId
+  );
+  const [showError, setShowError] = useState(false);
+  // initial
   useEffect(() => {
-    const productJson = localStorage.getItem("product");
-    if (productJson !== null) setNewProduct(JSON.parse(productJson));
+    const productsJSON = localStorage.getItem(STORAGE_KEY);
+    if (productsJSON !== null) setProducts(JSON.parse(productsJSON));
   }, []);
+  //state change(del,edit) fik yin run ml
   useEffect(() => {
-    localStorage.setItem(
-      "product",
-      JSON.stringify([newProduct.name, newProduct.price])
-    );
-  }, [newProduct]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  }, [products]);
+  function handleNewProductAdd() {
+    const newProduct = {
+      id: uuidv4(),
+      name: "",
+      price: "",
+      category: "",
+    };
+    setProducts([...products, newProduct]);
+    setSelectedProductId(newProduct.id);
+  }
+  function handleProductDelete(id) {
+    setProducts(products.filter((item) => item.id !== id));
+    setShowError(true);
+    setTimeout(() => {
+      setShowError(false);
+    }, 3000);
+  }
+  function handleProductDataChange(id, updateproductData) {
+    const newProducts = [...products];
+    const productIndex = newProducts.findIndex((product) => product.id === id);
+    newProducts[productIndex] = updateproductData;
+    setProducts(newProducts);
+  }
+  function handleProductSelect(id) {
+    setSelectedProductId(id);
+  }
+  const menuContextValue = {
+    handleProductDelete,
+    handleNewProductAdd,
+    handleProductSelect,
+    handleProductDataChange,
+  };
+
   return (
-    <main className="bg-gray-100 h-screen">
-      <div className="container  mx-auto bg-white flex h-100">
-        {/* add form */}
-        <div className="w-1/2 p-4">
-          <AddForm newProduct={newProduct} setNewProduct={setNewProduct} />
-        </div>
-        {/* preview */}
-        <div className="w-1/2 p-4 flex justify-center preview">
-          <div className="w-2/3 mx-auto">
-            <div className="flex justify-center items-center">
-              <img src={logo} alt="logo" className="h-40" />
-            </div>
-            {products.map((product) => (
-              <ProductGroup key={product.id} product={product} />
-            ))}
-            <ProductRow name={newProduct.name} price={newProduct.price} />
-          </div>
-        </div>
-      </div>
-    </main>
+    <MenuContext.Provider value={menuContextValue}>
+      <nav className="container py-2 ">
+        <ul className="flex justify-around text-blue-500">
+          <Link to="/">User</Link>
+          <Link to="/admin">Admin</Link>
+        </ul>
+      </nav>
+      {/* where our componensts will render */}
+      <Routes>
+        <Route path="/" element={<User products={products} />} />
+        <Route
+          path="/admin"
+          element={
+            <Admin
+              selectedProduct={selectedProduct}
+              showError={showError}
+              products={products}
+            />
+          }
+        />
+      </Routes>
+    </MenuContext.Provider>
   );
 }
 
 export default App;
+function Home() {
+  return <div>Home</div>;
+}
+function AboutUs() {
+  return <div>About Us</div>;
+}
+function Courses() {
+  return <div>Courses</div>;
+}
